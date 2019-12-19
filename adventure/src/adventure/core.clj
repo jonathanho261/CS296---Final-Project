@@ -7,13 +7,11 @@
 
 ;; Map
 (def init-map
-  {:PAR {:desc "Welcome to Pennsylvania Avenue Residence Hall! You can smell food from the dining hall
-  and see lots of excited freshman."
+  {:PAR {:desc "Welcome to Pennsylvania Avenue Residence Hall! You can smell food from the dining hall and see lots of excited freshman."
            :title "in PAR"
            :dir {:north :CRCE}
            :contents #{:iCard}}
-   :CRCE {:desc "The smaller gym on campus. You can see some buff dudes trying too hard and some awkward
-   skinny people looking lost."
+   :CRCE {:desc "The smaller gym on campus. You can see some buff dudes trying too hard and some awkward skinny people looking lost."
               :title "in CRCE"
               :dir {:south :PAR :north :illini-union :west :morrow-plots}
               :contents #{}}
@@ -300,12 +298,13 @@
 
 
 (defn status [state]
-  (let [location (get-in [:adventurer :location] state)
+  (let [location (get-in state [:adventurer :location])
         the-map (:map state)]
     (print (str "You are " (-> the-map location :title) ". "))
-    (when-not ((get-in [:adventurer :seen] state) location)
+    (when-not ((get-in state [:adventurer :seen]) location)
       (print (-> the-map location :desc)))
-    (update-in state [:adventurer :seen] #(conj % location))))
+    (update-in state [:adventurer :seen] #(conj % location))
+    ))
 
 ; (defn go [state dir]
 ;   (let [location (get-in [:adventurer :location] player)
@@ -322,7 +321,7 @@
     (let [pl (status local-state) 
           _  (println "What do you want to do?")
           command (read-line)]
-      (recur (react pl (canonicalize command))))))
+      (recur local-state ))))
 
 ; (defn -main
 ;   "I don't do a whole lot ... yet."
