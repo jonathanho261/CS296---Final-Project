@@ -212,6 +212,25 @@
 ;; </code></pre>
 
 
+
+(defn status [state]
+  (let [location (get-in state [:adventurer :location])
+        the-map (:map state)]
+    (print (str "You are " (-> the-map location :title) ". "))
+    (when-not ((get-in state [:adventurer :seen]) location)
+      (print (-> the-map location :desc)))
+    (update-in state [:adventurer :seen] #(conj % location))
+    ))
+
+(defn go [state dir]
+  (let [location (get-in state [:adventurer :location])
+        dest ((get-in state [:map location :dir]) dir)]
+    (if (nil? dest)
+      (do (println "You can't go that way.")
+          state)
+      (assoc-in state [:adventurer :location] dest))))
+
+
 ;; # Action Environment
 ;;
 ;; The runtime environment is a vector of the form
@@ -229,7 +248,10 @@
                     [:there :is :a "@"] there-is-a
                     [:the "@" :is "@"] the-obj-is
                     [:describe "@"] describe-obj
-                    [:forget "@"] forget-obj])  ;; add your other functions here
+                    [:forget "@"] forget-obj
+                    [:go "@"] go
+                    ]
+)  ;; add your other functions here
 
 ;; # Parsing
 ;;
@@ -297,31 +319,17 @@
   )
 
 
-(defn status [state]
-  (let [location (get-in state [:adventurer :location])
-        the-map (:map state)]
-    (print (str "You are " (-> the-map location :title) ". "))
-    (when-not ((get-in state [:adventurer :seen]) location)
-      (print (-> the-map location :desc)))
-    (update-in state [:adventurer :seen] #(conj % location))
-    ))
-
-; (defn go [state dir]
-;   (let [location (get-in [:adventurer :location] player)
-;         dest ((get-in [:map location :dir] state) dir)]
-;     (if (nil? dest)
-;       (do (println "You can't go that way.")
-;           player)
-;       (assoc-in state [:adventurer :location] dest))))
-
 (defn -main
   "Initialize the adventure"
   [& args]
-  (loop [local-state {:map init-map :adventurer init-adventurer :items init-items}]
+  (loop [local-state {:map init-map :adventurer init-adventurer :items init-items :runtime initial-env}]
     (let [pl (status local-state) 
           _  (println "What do you want to do?")
           command (read-line)]
-      (recur local-state ))))
+          ; (go pl :north)
+          ; (print (get-in pl [:adventurer]))
+          ; (print (get-in (react pl (canonicalize command)) [:adventurer :location]))
+      (recur (react pl (canonicalize command)) ))))
 
 ; (defn -main
 ;   "I don't do a whole lot ... yet."
