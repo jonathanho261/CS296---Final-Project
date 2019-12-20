@@ -10,7 +10,7 @@
   {:PAR {:desc "Welcome to Pennsylvania Avenue Residence Hall! You can smell food from the dining hall and see lots of excited freshman."
            :title "in PAR"
            :dir {:north :CRCE}
-           :contents #{:iCard}}
+           :contents #{:icard}}
    :CRCE {:desc "The smaller gym on campus. You can see some buff dudes trying too hard and some awkward skinny people looking lost."
               :title "in CRCE"
               :dir {:south :PAR :north :illini-union :west :morrow-plots}
@@ -30,7 +30,7 @@
     :grainger {:desc "Filled with a bunch of nerds. Smells kind of funky. Not the place to be."
               :title "in Grainger"
               :dir {:south :illini-union :north :DCL}
-              :contents #{}}
+              :contents #{:book}}
     :DCL {:desc "Big place. CBTF in the basement, Engineering Career Services on the third floor."
               :title "in DCL"
               :dir {:south :grainger :north :ECEB}
@@ -38,21 +38,27 @@
     :ECEB {:desc "Smells worse than Grainger. The ECE department should invest in showers..."
               :title "in ECEB"
               :dir {:south :DCL :east :siebel}
-              :contents #{}}
+              :contents #{:free-tshirt}}
     :siebel {:desc "Best place on campus... but also a lot of nerds."
               :title "in Siebel"
               :dir {:west :ECEB}
-              :contents #{}}
+              :contents #{:diploma}}
    })
 
 ;; Items
 (def init-items
- {:iCard {:desc "Don't forget your identication!"
+ {:icard {:desc "Don't forget your identication!"
             :name "iCard" }
   :corncob {:desc "It's a corncob! Might want to cook it before you eat it!"
             :name "corncob"}
   :corn-on-a-cob {:desc "Mhmmm... looks delicious."
             :name "corn on a cob"}
+  :book {:desc "It's a book."
+            :name "book"}
+  :free-tshirt {:desc "It's a t shirt. It's free. It's a free tshirt."
+            :name "free-tshirt"}
+  :diploma {:desc "Piece of paper, seems kinda useless."
+            :name "diploma"}
   
   })
 
@@ -62,169 +68,164 @@
   {:location :PAR
    :inventory #{}
    :name "Steve"
-   :hobbies "Eating corn"
+   :goal "eat corn from the Blessed Morrow Plots"
    :tick 0
    :seen #{}})
 
-
-
-;; # Interaction
-;; A simple parser that can remember facts.
-;;
-
-;; # Actions
-;;
-;; Let an *action* be a function with a specific
-;; interface: It will take in a *state* followed by
-;; a sequence of arguments.  It will return a vector
-;; consisting of a new state and a response string.
-;;
-;; Here is a simple example, a post-increment function.
-;; Assume the state is a hash-map with a key :vars
-;; and a value containing a hash of the variables and
-;; their values.
-
-
-(defn post-increment
-  "Action: post-increment
-   Returns the value of a variable from the state and increments it."
-  [state var]
-  (if-let [val (get-in state [:vars var])]
-    [(update-in state [:vars var] inc) val]
-    [(assoc-in state [:vars var] 1) 0]))
-
-;; <pre><code>
-;; interaction.core=> (post-increment {:vars {:x 10}} :x)
-;; [{:vars {:x 11}} 10]
-;; </code></pre>
-
-;; ## Your work
-;;
-;; Fill in the code for these functions.
-;;
-
-(defn lookup-var
-  "Given a state and a variable name, return the value of the variable
-  if it has been defined, otherwise return 0."
-  [state var]
-  (if-let [val (get-in state [:vars var])]
-    [state val]
-    [state 0])
+(defn examine [state item]
+  (let [inventory (get-in state [:adventurer :inventory])]
+    (cond
+     (contains? inventory item) (when true
+                                  (println "You have a(n)" (name item) "\b.\n"(get-in state [:items item :desc]))
+                                  state
+                                )
+      :else (when true
+              (println (str "You don't have that item" (get-in state [:adventurer :name]) "!"))
+              state
+            ) 
+     )
   )
+)
 
-;; <pre><code>
-;; interaction.core=> (lookup-var {:vars {:x 10}} :x)
-;; [{:vars {:x 10}} 10]
-;; </code></pre>
-
-(defn set-plus
-  "Action: set-plus.  Set var = e1 + e2, return the sum as a result."
-  [state var e1 e2]
-  (cond
-     (and (number? e1) (number? e2)) [(assoc-in state [:vars var] (+ e1 e2)) (+ e1 e2)]
-     (number? e1) [(assoc-in state [:vars var] (+ e1 (second (lookup-var state e2)))) (+ e1 (second (lookup-var state e2)))]
-     (number? e2) [(assoc-in state [:vars var] (+ e2 (second (lookup-var state e1)))) (+ e2 (second (lookup-var state e1)))]
-     :else [(assoc-in state [:vars var] (+ (second (lookup-var state e1)) (second (lookup-var state e2)))) (+ (second (lookup-var state e1)) (second (lookup-var state e2)))]
+(defn cook [state item]
+  (let [inventory (get-in state [:adventurer :inventory])]
+  ; (print (get-in (update-in (update-in state [:adventurer :inventory] #(disj % :corncob)) [:adventurer :inventory] #(conj % :corn-on-a-cob)) [:adventurer]))
+  ; (print (contains? inventory :corncob))
+    (cond 
+      ; (inventory :corncob) (update-in (update-in state [:adventurer :inventory] #(disj % :corncob)) #(conj % :corn-on-a-cob))
+      
+      ; (update-in (dissoc-in state [:adventurer :inventory item]) conj :corn-on-a-cob)
+      ; (print (disj inventory :corncob))
+      (contains? inventory :corncob) (when true
+                                        (println "You cooked a corncob and got a corn-on-a-cob! Eat it!\n")
+                                        (update-in (update-in state [:adventurer :inventory] #(disj % :corncob)) [:adventurer :inventory] #(conj % :corn-on-a-cob))  
+                                        )
+      :else (when true
+                (println "You can't cook that!")
+                state)
       )
-    ; [(update-in state [:vars var] e2) (+' (get-in state [:vars e1]) e2)]
+      ; (println "You can't cook that!")
+      ; state
+  )
 )
 
-;; <pre><code>
-;; interaction.core=> (set-plus {:vars {:x 10}} :y :x 20)
-;; [{:vars {:x 10 :y 30}} 30]
-;; </code></pre>
-
-(defn set-var
-  "Action: set-var. Set var = e1.  Return the new value as a result."
-  [state var e1]
-  (let [val (get-in state [:vars var])]
-    (if (= 0 (second (lookup-var state e1))) [(assoc-in state [:vars var] e1) e1]
-    [(assoc-in state [:vars var] (second (lookup-var state e1))) (second (lookup-var state e1))])))
-
-;; <pre><code>
-;; interaction.core=> (set-var {:vars {:x 10}} :y :x)
-;; [{:vars {:x 10 :y 10}} 10]
-;; </code></pre>
-
-(defn there-is-a
-  "Action: there-is-a.  Remember that an object obj exists.
-  Returns \"There is a obj\" as a result."
-  [state object]
-  [(assoc-in state [:objects object] []) (str "There is a " (name object) ".")]
+(defn inventory [state]
+  (println (get-in state [:adventurer :inventory]))
+  state
   )
 
-;; <pre><code>
-;; interaction.core=> (there-is-a {:vars {:x 10}} :shoe)
-;; [{:vars {:x 10 :y 10}
-;;   :objects {:shoe []}} "There is a shoe."]
-;; </code></pre>
-
-(defn the-obj-is
-  "Action: there-obj-a.  Remember an adjective that applies to an object.
-  Returns \"The obj is adj\" as a result."
-  [state object adj]
-  [(update-in state [:objects object] conj adj) (str "The " (name object) " is " (name adj) ".")]
-  )
-;; <pre><code>
-;; interaction.core=> (the-obj-is {:vars {:x 10} :objects {:shoe []}} :shoe :blue)
-;; [{:vars {:x 10} :objects {:shoe [:blue]}} "The shoe is blue."]
-;; </code></pre>
-
-
-
-(defn describe-obj 
-  "Describe the given object \"The obj is adj\" if it exists in state . If not, return \"There is no obj\""
-  [state object]
-  (let [adjs '()
-        objs (state :objects)]
-      (cond
-        (= nil (objs object)) [state (str "There is no " (name object) ".")]
-        :else (loop [retval [state]
-                    nu-objs (objs object)]
-                      (if (empty? nu-objs) retval
-                      ; (print nu-objs)
-                      ; (conj retval (second (the-obj-is state object (first nu-objs))))
-                        (recur (conj retval (second (the-obj-is state object (first nu-objs)))) (rest nu-objs))))))
+(defn biography [state]
+  (println (str "\n\n\nHi my name is " (get-in state [:adventurer :name]) ".\nMy goal in life is " (get-in state [:adventurer :goal]) ".\nHelp me achieve my dream!\n"))
 )
-;; <pre><code>
-;; interaction.core=> (describe-obj  {:vars {:x 10} :objects {:shoe [:blue :big]}} :shoe)
-;; [{:vars {:x 10}, :objects {:shoe [:blue :big]}} "The shoe is blue." "The shoe is big."]
-;; </code></pre>
 
-(defn dissoc-in
-  [m [k & ks :as keys]]
-  (if ks
-    (if-let [nextmap (get m k)]
-      (let [newmap (dissoc-in nextmap ks)]
-        (assoc m k newmap))
-      m)
-    (dissoc m k)))
-
-
-(defn forget-obj
-  "Delete the given object and return \"What obj?\""
-  [state object]
-  [(dissoc-in state [:objects object]) (str "What " (name object) "?")]
+(defn quit [state]
+  (update-in state [:done] not)
   )
-;; <pre><code>
-;; interaction.core=> (forget-obj {:objects {:show [:exciting]}} :show)
-;; [{:objects {}} "What show?"]
-;; </code></pre>
 
 
+(defn take [state item]
+  (let [location (get-in state [:adventurer :location])
+        contents (get-in state [:map location :contents])]
+        ; (println contents)
+        ; (println item)
+        ; (println (contains? contents item))
+        (cond
+          (contains? contents item) (when true
+                                      (println (str "You picked up " (name item) ".\n"))
+                                      (update-in (update-in state [:map location :contents] #(disj % item)) [:adventurer :inventory] #(conj % item))
+                                    )
+          :else (when true
+                  (println "You can't pick that up!\n")
+                  state
+                )
+          
+          ))
+
+)
+
+
+(defn drop [state item]
+  (let [inventory (get-in state [:adventurer :inventory])]
+    (cond
+      (contains? inventory item) (when true
+                                    (println (str "You dropped " (name item) ".\n"))
+                                    (update-in state [:adventurer :inventory] #(disj % item))
+                                    )
+      :else (when true
+              (println "You don't have that item!")
+              state)
+      )
+    )
+  )
+
+(defn eat [state item]
+  (let [inventory (get-in state [:adventurer :inventory])]
+    (cond
+      (and (contains? inventory :corn-on-a-cob) (= item :corn-on-a-cob)) (when true
+                                    (println )
+                                    (println (str "You ate " (name item) "."))
+                                    (println (str "You've eaten the fruit of the holy Morrow Plots. You feel a sense of pride and accomplishment."))
+                                    (println "You've done it, you've won at life.")
+                                    (println )
+                                    (update-in (update-in state [:adventurer :inventory] #(disj % item)) [:done] not)
+                                    )
+      :else (when true
+              (println "You can't eat that item!\n")
+              state)
+      )
+    )
+  )
+
+; (defn pickup [state item])
 
 (defn status [state]
   (let [location (get-in state [:adventurer :location])
         the-map (:map state)]
-    (print (str "You are " (-> the-map location :title) ". "))
+    (println (str "\nYou are " (-> the-map location :title) ". "))
     (when-not ((get-in state [:adventurer :seen]) location)
-      (print (-> the-map location :desc)))
+      (println (-> the-map location :desc)))
+    (println (str "Items in the room: " (get-in state [:map location :contents])))
+    (println (str "Directions you can go: " (get-in state [:map location :dir])))
     (update-in state [:adventurer :seen] #(conj % location))
     ))
 
 (defn go [state dir]
   (let [location (get-in state [:adventurer :location])
         dest ((get-in state [:map location :dir]) dir)]
+    (if (nil? dest)
+      (do (println "You can't go that way.")
+          state)
+      (assoc-in state [:adventurer :location] dest))))
+
+(defn north [state]
+  (let [location (get-in state [:adventurer :location])
+        dest ((get-in state [:map location :dir]) :north)]
+        (print dest)
+    (if (nil? dest)
+      (do (println "You can't go that way.")
+          state)
+      (assoc-in state [:adventurer :location] dest))))
+
+
+(defn east [state]
+  (let [location (get-in state [:adventurer :location])
+        dest ((get-in state [:map location :dir]) :east)]
+    (if (nil? dest)
+      (do (println "You can't go that way.")
+          state)
+      (assoc-in state [:adventurer :location] dest))))
+
+(defn west [state]
+  (let [location (get-in state [:adventurer :location])
+        dest ((get-in state [:map location :dir]) :west)]
+    (if (nil? dest)
+      (do (println "You can't go that way.")
+          state)
+      (assoc-in state [:adventurer :location] dest))))
+
+(defn south [state]
+  (let [location (get-in state [:adventurer :location])
+        dest ((get-in state [:map location :dir]) :south)]
     (if (nil? dest)
       (do (println "You can't go that way.")
           state)
@@ -241,15 +242,28 @@
 ;; (Remember that a keyword is a symbol starting with a colon, like :name.)
 ;; The `@` character will represent a variable.
 
-(def initial-env [  [:postinc "@"] post-increment
-                    [:lookup "@"] lookup-var
-                    [:set "@" :to "@" :plus "@"] set-plus
-                    [:set "@" :to "@"] set-var
-                    [:there :is :a "@"] there-is-a
-                    [:the "@" :is "@"] the-obj-is
-                    [:describe "@"] describe-obj
-                    [:forget "@"] forget-obj
+(def initial-env [  
                     [:go "@"] go
+                    [:north] north
+                    [:n] north
+                    [:south] south
+                    [:s] south
+                    [:east] east
+                    [:e] east
+                    [:west] west
+                    [:w] west
+                    [:cook "@"] cook
+                    [:inventory] inventory
+                    [:i] inventory
+                    [:drop "@"] drop
+                    [:eat "@"] eat
+                    [:quit] quit
+                    [:exit] quit
+                    [:take "@"] take
+                    [:pickup "@"] take
+                    [:biography] biography
+                    [:examine "@"] examine
+                    [:look "@"] examine
                     ]
 )  ;; add your other functions here
 
@@ -322,17 +336,32 @@
 (defn -main
   "Initialize the adventure"
   [& args]
-  (loop [local-state {:map init-map :adventurer init-adventurer :items init-items :runtime initial-env}]
+  (let [intro {:adventurer init-adventurer  :runtime initial-env }]
+    (react intro [:biography]))
+
+  (loop [local-state {:map init-map :adventurer init-adventurer :items init-items :runtime initial-env :done false}]
+  (if (get-in local-state [:done])  (println (str "Actions taken: " (get-in local-state [:adventurer :tick]) "\nBye!"))
+  
+  ;(when true
+                            ; (println (str "Actions taken: " (get-in local-state [:adventurer :tick])))
+                          ;   (println "G'Bye!")
+                          ; )
     (let [pl (status local-state) 
           _  (println "What do you want to do?")
           command (read-line)]
           ; (go pl :north)
           ; (print (get-in pl [:adventurer]))
           ; (print (get-in (react pl (canonicalize command)) [:adventurer :location]))
-      (recur (react pl (canonicalize command)) ))))
+          ; (print (get-in pl [:adventurer :inventory]))
+          ; (print (react pl (canonicalize command)))
+          ; (print (cook pl :corncob))
+          ; (print (get-in (update-in (react pl (canonicalize command)) [:adventurer :tick] inc) [:adventurer]))
+      (recur (update-in (react pl (canonicalize command)) [:adventurer :tick] inc) )))))
 
 ; (defn -main
 ;   "I don't do a whole lot ... yet."
 ;   [& args]
 ;   (println "Hello, World!")
 ;   (print (repl initial-env)))
+
+
